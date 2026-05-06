@@ -1,0 +1,6 @@
+# Image Puzzle Shuffle Game — Save File
+IMAGE=C:\Users\25mx125\Downloads\Dogs_love.jpg
+GRID=3
+MOVES=0
+TIME=0
+POSITIONS=7,4,0,6,5,1,2,3,8

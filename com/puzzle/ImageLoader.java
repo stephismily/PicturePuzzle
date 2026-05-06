@@ -49,6 +49,17 @@ public class ImageLoader {
         int imgH      = sourceImage.getHeight();
         tileSize      = Math.min(imgW, imgH) / n;
 
+        // CONSTRAINT: Ensure tiles fit within the display area (480×480)
+        // Tiles must fit: offsetX + n * tileSize ≤ canvasWidth
+        // With offsetX=20, canvasWidth=520: tileSize ≤ 500/n
+        // Using 480 (BOARD_DISPLAY) for safety: tileSize ≤ 480/n
+        int maxTileSize = 480 / n;
+        if (tileSize > maxTileSize) {
+            System.out.println("[ImageLoader] Constraining tileSize from " + tileSize + 
+                             " to " + maxTileSize + " to fit display area");
+            tileSize = maxTileSize;
+        }
+
         // Scale source to exact n*tileSize square for clean slicing
         BufferedImage scaled = new BufferedImage(n * tileSize, n * tileSize,
                                                   BufferedImage.TYPE_INT_ARGB);
