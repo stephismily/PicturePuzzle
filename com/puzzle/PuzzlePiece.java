@@ -4,27 +4,24 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
- * ABSTRACT CLASS — defines the blueprint for every tile on the board.
- * Concrete subclasses: ImageTile, BlankTile
+ * Base tile class shared by image tiles and the blank tile.
  */
 public abstract class PuzzlePiece {
 
-    protected int originalIndex;    // correct position (0-based)
-    protected int currentPosition;  // where it currently sits on the board
-    protected BufferedImage tileImage;
-    protected boolean highlighted = false;
-    protected Color highlightColor = Color.YELLOW;
+    protected int originalIndex;    // where this tile belongs when the puzzle is solved
+    protected int currentPosition;  // where this tile is right now on the board
+    protected BufferedImage tileImage; // image shown for this tile
+    protected boolean highlighted = false; // true when the tile should show a hint border
+    protected Color highlightColor = Color.YELLOW; // color used to draw the hint border
 
     public PuzzlePiece(int originalIndex, int currentPosition, BufferedImage img) {
-        this.originalIndex  = originalIndex;
+        this.originalIndex = originalIndex;
         this.currentPosition = currentPosition;
-        this.tileImage       = img;
+        this.tileImage = img;
     }
 
-    /** Draw this tile at pixel co-ordinates (x, y) on the given Graphics context. */
     public abstract void draw(Graphics g, int x, int y, int tileSize);
 
-    /** Return the tile's current board position. */
     public abstract int getPosition();
 
     public boolean isInCorrectPosition() {
@@ -32,7 +29,7 @@ public abstract class PuzzlePiece {
     }
 
     public void highlight(Color c) {
-        this.highlighted   = true;
+        this.highlighted = true;
         this.highlightColor = c;
     }
 
@@ -40,7 +37,15 @@ public abstract class PuzzlePiece {
         this.highlighted = false;
     }
 
-    public int getOriginalIndex()  { return originalIndex; }
-    public void setCurrentPosition(int p) { this.currentPosition = p; }
-    public BufferedImage getTileImage()   { return tileImage; }
+    public int getOriginalIndex() {
+        return originalIndex;
+    }
+
+    public void setCurrentPosition(int p) {
+        this.currentPosition = p;
+    }
+
+    public BufferedImage getTileImage() {
+        return tileImage;
+    }
 }

@@ -3,8 +3,7 @@ package com.puzzle;
 import java.awt.*;
 
 /**
- * BLANK TILE — the empty/sliding space on the puzzle board.
- * Extends abstract PuzzlePiece with a null image.
+ * Represents the blank space on the puzzle board.
  */
 public class BlankTile extends PuzzlePiece {
 
@@ -14,7 +13,6 @@ public class BlankTile extends PuzzlePiece {
 
     @Override
     public void draw(Graphics g, int x, int y, int tileSize) {
-        // Draw a dark empty square
         g.setColor(new Color(30, 30, 50));
         g.fillRect(x, y, tileSize, tileSize);
         g.setColor(new Color(60, 60, 90));
@@ -22,5 +20,7 @@ public class BlankTile extends PuzzlePiece {
     }
 
     @Override
-    public int getPosition() { return currentPosition; }
+    public int getPosition() {
+        return currentPosition;
+    }
 }

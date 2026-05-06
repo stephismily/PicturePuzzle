@@ -3,29 +3,27 @@ package com.puzzle;
 import java.io.Serializable;
 
 /**
- * SERIALIZATION — snapshot of the full puzzle state.
- * Used for binary quick-save (.ser) and CSV text-save (.txt).
+ * Holds the saved puzzle state for load/save operations.
  */
 public class GameState implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private int[]  tilePositions;  // tilePositions[originalIndex] = currentPosition
-    private int    moveCount;
-    private long   elapsedSeconds;
-    private String imagePath;
-    private int    gridSize;
+    private int[] tilePositions;  // original tile index → current board position
+    private int moveCount;        // how many moves were made so far
+    private long elapsedSeconds;  // elapsed time when the state was saved
+    private String imagePath;     // path to the source image file
+    private int gridSize;        // size of the board grid
 
     public GameState(int[] tilePositions, int moveCount, long elapsedSeconds,
                      String imagePath, int gridSize) {
-        this.tilePositions  = tilePositions;
-        this.moveCount      = moveCount;
+        this.tilePositions = tilePositions;
+        this.moveCount = moveCount;
         this.elapsedSeconds = elapsedSeconds;
-        this.imagePath      = imagePath;
-        this.gridSize       = gridSize;
+        this.imagePath = imagePath;
+        this.gridSize = gridSize;
     }
 
-    /** Serialize to a single CSV line for CHARACTER STREAM text save. */
     public String toCSV() {
         StringBuilder sb = new StringBuilder();
         sb.append("IMAGE=").append(imagePath).append("\n");
@@ -41,25 +39,30 @@ public class GameState implements Serializable {
         return sb.toString();
     }
 
-    /** Deserialize from the CSV text format. */
     public static GameState fromCSV(String csv) {
         String[] lines = csv.split("\n");
         String imagePath = "";
-        int gridSize = 3, moveCount = 0;
+        int gridSize = 3;
+        int moveCount = 0;
         long elapsed = 0;
         int[] positions = new int[0];
 
         for (String line : lines) {
             line = line.trim();
-            if (line.startsWith("IMAGE="))     imagePath = line.substring(6);
-            else if (line.startsWith("GRID=")) gridSize  = Integer.parseInt(line.substring(5));
-            else if (line.startsWith("MOVES="))moveCount = Integer.parseInt(line.substring(6));
-            else if (line.startsWith("TIME=")) elapsed   = Long.parseLong(line.substring(5));
-            else if (line.startsWith("POSITIONS=")) {
+            if (line.startsWith("IMAGE=")) {
+                imagePath = line.substring(6);
+            } else if (line.startsWith("GRID=")) {
+                gridSize = Integer.parseInt(line.substring(5));
+            } else if (line.startsWith("MOVES=")) {
+                moveCount = Integer.parseInt(line.substring(6));
+            } else if (line.startsWith("TIME=")) {
+                elapsed = Long.parseLong(line.substring(5));
+            } else if (line.startsWith("POSITIONS=")) {
                 String[] parts = line.substring(10).split(",");
                 positions = new int[parts.length];
-                for (int i = 0; i < parts.length; i++)
+                for (int i = 0; i < parts.length; i++) {
                     positions[i] = Integer.parseInt(parts[i].trim());
+                }
             }
         }
         return new GameState(positions, moveCount, elapsed, imagePath, gridSize);
@@ -70,10 +73,9 @@ public class GameState implements Serializable {
                 imagePath, gridSize, gridSize, moveCount, elapsedSeconds);
     }
 
-    // Getters
-    public int[]  getTilePositions()  { return tilePositions;  }
-    public int    getMoveCount()      { return moveCount;       }
-    public long   getElapsedSeconds() { return elapsedSeconds; }
-    public String getImagePath()      { return imagePath;       }
-    public int    getGridSize()       { return gridSize;        }
+    public int[] getTilePositions() { return tilePositions; }
+    public int getMoveCount() { return moveCount; }
+    public long getElapsedSeconds() { return elapsedSeconds; }
+    public String getImagePath() { return imagePath; }
+    public int getGridSize() { return gridSize; }
 }

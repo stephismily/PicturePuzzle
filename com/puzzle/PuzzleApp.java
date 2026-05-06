@@ -6,48 +6,32 @@ import java.io.IOException;
 import javax.swing.Timer;
 
 /**
- * PUZZLE APP — AWT GUI entry point.
- *
- * AWT Components used:
- *   Frame, Canvas, Panel, Button, Label, TextField, FileDialog, Dialog
- *
- * Integrates all concepts:
- *   RandomAccessFile (via ImageLoader)
- *   Image Manipulation (via ImageLoader + ImageTile)
- *   Character Streams (via GameStateManager)
- *   Abstract Classes (PuzzlePiece hierarchy)
- *   Exception Handling (InvalidMoveException + IOException)
- *   Collections (PuzzleBoard internal ArrayList + HashMap)
- *   Serialization (GameState)
+ * Main puzzle app window and game controller.
  */
 public class PuzzleApp extends Frame implements ActionListener, MouseListener {
 
-    // ── AWT Components ────────────────────────────────────────────────────────
-    private Canvas       boardCanvas;
-    private Button       btnLoad, btnShuffle, btnSave, btnLoad2, btnHint, btnNew;
-    private Label        lblMoves, lblTime, lblBest, lblStatus;
-    private Choice       choiceGrid;
-    private Panel        topPanel, bottomPanel, sidePanel;
+    private Canvas boardCanvas; // area where the puzzle is drawn
+    private Button btnLoad, btnShuffle, btnSave, btnLoad2, btnHint, btnNew;
+    private Label lblMoves, lblTime, lblBest, lblStatus;
+    private Choice choiceGrid;
+    private Panel topPanel, bottomPanel, sidePanel;
 
-    // ── Core Objects ──────────────────────────────────────────────────────────
-    private ImageLoader      imageLoader      = new ImageLoader();
-    private PuzzleBoard      puzzleBoard      = new PuzzleBoard();
-    private GameStateManager stateManager     = new GameStateManager();
-    private ImageTile[]      currentTiles;
-    private String           currentImagePath = "";
+    private ImageLoader imageLoader = new ImageLoader();
+    private PuzzleBoard puzzleBoard = new PuzzleBoard();
+    private GameStateManager stateManager = new GameStateManager();
+    private ImageTile[] currentTiles;
+    private String currentImagePath = ""; // currently loaded image path
 
-    // ── State ─────────────────────────────────────────────────────────────────
-    private boolean  gameStarted = false;
-    private boolean  showingHint = false;
-    private long     startTime   = 0;
-    private int      elapsedSec  = 0;
-    private Timer    timer;
+    private boolean gameStarted = false; // true while a game is active
+    private boolean showingHint = false; // true while hint mode is on
+    private long startTime = 0;          // timer start in milliseconds
+    private int elapsedSec = 0;          // seconds passed since start
+    private Timer timer;
 
-    private static final int BOARD_OFFSET_X = 20;
-    private static final int BOARD_OFFSET_Y = 20;
-    private static final int BOARD_DISPLAY  = 480;
+    private static final int BOARD_OFFSET_X = 20; // left margin for board
+    private static final int BOARD_OFFSET_Y = 20; // top margin for board
+    private static final int BOARD_DISPLAY  = 480; // board width and height
 
-    // ── Constructor ───────────────────────────────────────────────────────────
     public PuzzleApp() {
         super("Image Puzzle Shuffle Game");
         buildGUI();
@@ -55,23 +39,19 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         lblStatus.setText("Click 'Load Image' to start.");
     }
 
-    // ── GUI Construction ──────────────────────────────────────────────────────
     private void buildGUI() {
         setSize(780, 600);
         setLayout(new BorderLayout(8, 8));
         setBackground(new Color(18, 18, 35));
 
-        // ── Board Canvas
         boardCanvas = new Canvas() {
-            @Override
-            public void paint(Graphics g) { paintBoard(g); }
+            @Override public void paint(Graphics g) { paintBoard(g); }
         };
         boardCanvas.setSize(BOARD_DISPLAY + 40, BOARD_DISPLAY + 40);
         boardCanvas.setBackground(new Color(25, 25, 45));
         boardCanvas.addMouseListener(this);
         add(boardCanvas, BorderLayout.CENTER);
 
-        // ── Side Panel
         sidePanel = new Panel(new GridLayout(0, 1, 6, 6));
         sidePanel.setBackground(new Color(28, 28, 55));
 
@@ -82,7 +62,9 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
 
         sidePanel.add(makeLabel("Grid Size:"));
         choiceGrid = new Choice();
-        choiceGrid.add("3 x 3"); choiceGrid.add("4 x 4"); choiceGrid.add("5 x 5");
+        choiceGrid.add("3 x 3");
+        choiceGrid.add("4 x 4");
+        choiceGrid.add("5 x 5");
         sidePanel.add(choiceGrid);
 
         btnLoad    = makeButton("Load Image",  new Color(60, 100, 200));
@@ -92,8 +74,12 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         btnSave    = makeButton("Save Game",   new Color(160, 80, 60));
         btnLoad2   = makeButton("Load Game",   new Color(60, 130, 150));
 
-        sidePanel.add(btnLoad); sidePanel.add(btnShuffle); sidePanel.add(btnNew);
-        sidePanel.add(btnHint); sidePanel.add(btnSave);    sidePanel.add(btnLoad2);
+        sidePanel.add(btnLoad);
+        sidePanel.add(btnShuffle);
+        sidePanel.add(btnNew);
+        sidePanel.add(btnHint);
+        sidePanel.add(btnSave);
+        sidePanel.add(btnLoad2);
 
         sidePanel.add(makeLabel("─────────────"));
         lblMoves  = makeLabel("Moves: 0");
@@ -102,21 +88,21 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         lblStatus = makeLabel("Ready");
         lblStatus.setFont(new Font("Arial", Font.ITALIC, 11));
         lblStatus.setForeground(new Color(180, 220, 180));
-        sidePanel.add(lblMoves); sidePanel.add(lblTime);
-        sidePanel.add(lblBest);  sidePanel.add(lblStatus);
+        sidePanel.add(lblMoves);
+        sidePanel.add(lblTime);
+        sidePanel.add(lblBest);
+        sidePanel.add(lblStatus);
 
         add(sidePanel, BorderLayout.EAST);
 
-        // ── Timer using AWT Thread
         timer = new Timer(1000, e -> {
             if (gameStarted) {
-                elapsedSec = (int)((System.currentTimeMillis() - startTime) / 1000);
+                elapsedSec = (int) ((System.currentTimeMillis() - startTime) / 1000);
                 lblTime.setText("Time: " + elapsedSec + "s");
             }
         });
         timer.start();
 
-        // ── Window close
         addWindowListener(new WindowAdapter() {
             @Override public void windowClosing(WindowEvent e) { onClose(); }
         });
@@ -124,7 +110,6 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         setLocationRelativeTo(null);
     }
 
-    // ── Paint Board ───────────────────────────────────────────────────────────
     private void paintBoard(Graphics g) {
         g.setColor(new Color(25, 25, 45));
         g.fillRect(0, 0, boardCanvas.getWidth(), boardCanvas.getHeight());
@@ -138,16 +123,15 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
                           boardCanvas.getHeight() / 2);
             return;
         }
+
         puzzleBoard.render(g, BOARD_OFFSET_X, BOARD_OFFSET_Y);
 
-        // Overlay move count on canvas
         g.setColor(new Color(200, 200, 255, 180));
         g.setFont(new Font("Arial", Font.BOLD, 14));
         g.drawString("Moves: " + puzzleBoard.getMoveCount(), BOARD_OFFSET_X + 4,
                       BOARD_OFFSET_X + puzzleBoard.getBoardPixelSize() + 16);
     }
 
-    // ── Button Actions ────────────────────────────────────────────────────────
     @Override
     public void actionPerformed(ActionEvent e) {
         Object src = e.getSource();
@@ -163,14 +147,15 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         FileDialog fd = new FileDialog(this, "Select an Image", FileDialog.LOAD);
         fd.setFile("*.jpg;*.jpeg;*.png;*.bmp");
         fd.setVisible(true);
-        String dir = fd.getDirectory(), file = fd.getFile();
+        String dir = fd.getDirectory();
+        String file = fd.getFile();
         if (dir == null || file == null) return;
         currentImagePath = dir + file;
         startGame(currentImagePath);
     }
 
     private void startGame(String path) {
-        int n = choiceGrid.getSelectedIndex() + 3; // 3, 4, or 5
+        int n = choiceGrid.getSelectedIndex() + 3; // grid size 3, 4, or 5
         try {
             imageLoader.closeCache();
             imageLoader.loadImage(path);
@@ -208,8 +193,13 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
     private void onHint() {
         if (!gameStarted) return;
         showingHint = !showingHint;
-        if (showingHint) { puzzleBoard.showHints(); btnHint.setLabel("Hide Hints"); }
-        else             { puzzleBoard.clearHints(); btnHint.setLabel("Show Hints"); }
+        if (showingHint) {
+            puzzleBoard.showHints();
+            btnHint.setLabel("Hide Hints");
+        } else {
+            puzzleBoard.clearHints();
+            btnHint.setLabel("Show Hints");
+        }
         boardCanvas.repaint();
     }
 
@@ -242,12 +232,10 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         }
     }
 
-    // ── Mouse Events (Drag-and-Swap) ─────────────────────────────────────────
     @Override
     public void mouseClicked(MouseEvent e) {
         if (!gameStarted) return;
-        int pos = puzzleBoard.pixelToPosition(e.getX(), e.getY(),
-                                               BOARD_OFFSET_X, BOARD_OFFSET_Y);
+        int pos = puzzleBoard.pixelToPosition(e.getX(), e.getY(), BOARD_OFFSET_X, BOARD_OFFSET_Y);
         if (pos < 0) return;
         try {
             puzzleBoard.swapWithBlank(pos);
@@ -279,7 +267,8 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         lbl.setFont(new Font("Arial", Font.BOLD, 13));
         Button ok = new Button("   OK   ");
         ok.addActionListener(ev -> d.dispose());
-        d.add(lbl); d.add(ok);
+        d.add(lbl);
+        d.add(ok);
         d.setVisible(true);
         boardCanvas.repaint();
     }
@@ -291,7 +280,6 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         System.exit(0);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
     private void updateBestLabel() {
         int b = stateManager.readBestScore();
         lblBest.setText("Best: " + (b == Integer.MAX_VALUE ? "—" : b + " moves"));
@@ -318,15 +306,12 @@ public class PuzzleApp extends Frame implements ActionListener, MouseListener {
         return l;
     }
 
-    // Unused MouseListener methods
     @Override public void mousePressed(MouseEvent e) {}
     @Override public void mouseReleased(MouseEvent e) {}
     @Override public void mouseEntered(MouseEvent e) {}
     @Override public void mouseExited(MouseEvent e) {}
 
-    // ── Main ──────────────────────────────────────────────────────────────────
     public static void main(String[] args) {
-        // Use system look and feel for AWT
         System.setProperty("awt.useSystemAAFontSettings", "on");
         new PuzzleApp();
     }
